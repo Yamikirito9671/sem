@@ -1,9 +1,11 @@
 name: CI - seMethods Lab 2
+
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -14,14 +16,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # 🧩 Fix: Maven runs in the correct folder (root where pom.xml exists)
       - name: Build with Maven
         run: mvn -B clean package
+        working-directory: ${{ github.workspace }}
 
+      # 🧩 Fix: Docker also builds from root (where Dockerfile exists)
       - name: Build Docker image
         run: docker build -t semethods-image .
+        working-directory: ${{ github.workspace }}
 
       - name: Run Docker container
-        run: docker run --name semethods-container -d semethods-image
+        run: docker run --name semethods-container semethods-image
 
       - name: Show container logs
-        run: docker logs semethods-container || true  # show app output
+        run: docker logs semethods-container
