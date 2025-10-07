@@ -1,0 +1,41 @@
+name: CI - seMethods Lab 2
+
+on: [push]
+
+jobs:
+build:
+runs-on: ubuntu-22.04
+
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    # Note: By default, this checks out your code to $GITHUB_WORKSPACE
+
+  - name: Set up JDK 17
+    uses: actions/setup-java@v4
+    with:
+      java-version: '17'
+      distribution: 'temurin'
+      cache: 'maven' # Added: Caches Maven dependencies for faster builds
+
+  # FIX: Changed from './seMethods' to the absolute path to forcefully ensure
+  # the working directory exists relative to the GitHub workspace root.
+  - name: Build with Maven
+    run: mvn -B clean package
+    working-directory: ${{ github.workspace }}/seMethods
+    # Specifies the absolute path to the directory containing pom.xml
+
+  # FIX: Applied the same absolute path fix for the Docker build context.
+  - name: Build Docker image
+    run: docker build -t semethods-image .
+    working-directory: ${{ github.workspace }}/seMethods
+
+  - name: Run Docker container
+    run: docker run -d --name semethods-container semethods-image
+    # Added: -d (detached mode) so the job doesn't hang waiting for the container to exit.
+
+  - name: Show container logs
+    # Waits a moment for the application inside the container to start and log
+    run: |
+      sleep 5 
+      docker logs semethods-container
